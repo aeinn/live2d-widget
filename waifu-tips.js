@@ -4,8 +4,8 @@
  */
 
 function loadWidget(config) {
-	let { waifuPath, apiPath, cdnPath } = config;
-	let useCDN = false, modelList;
+	let { apiPath, cdnPath } = config;
+	let useCDN = false//, modelList; //aii: delete modelList variable and  create a seperate json which has an array<object> of 
 	if (typeof cdnPath === "string") {
 		useCDN = true;
 		if (!cdnPath.endsWith("/")) cdnPath += "/";
@@ -167,11 +167,11 @@ function loadWidget(config) {
 			modelTexturesId = 53; // 材质 ID
 		}
 		loadModel(modelId, modelTexturesId);
-		fetch(waifuPath)
-			.then(response => response.json())
-			.then(result => {
+		// fetch(waifuPath)
+		// 	.then(response => response.json())
+		// 	.then(result => {
 				window.addEventListener("mouseover", event => {
-					for (let { selector, text } of result.mouseover) {
+					for (let { selector, text } of waifuPath.mouseover) {
 						if (!event.target.matches(selector)) continue;
 						text = randomSelection(text);
 						text = text.replace("{text}", event.target.innerText);
@@ -180,7 +180,7 @@ function loadWidget(config) {
 					}
 				});
 				window.addEventListener("click", event => {
-					for (let { selector, text } of result.click) {
+					for (let { selector, text } of waifuPath.click) {
 						if (!event.target.matches(selector)) continue;
 						text = randomSelection(text);
 						text = text.replace("{text}", event.target.innerText);
@@ -188,7 +188,7 @@ function loadWidget(config) {
 						return;
 					}
 				});
-				result.seasons.forEach(({ date, text }) => {
+				waifuPath.seasons.forEach(({ date, text }) => {
 					const now = new Date(),
 						after = date.split("-")[0],
 						before = date.split("-")[1] || after;
@@ -199,24 +199,30 @@ function loadWidget(config) {
 						messageArray.push(text);
 					}
 				});
-			});
+			// });
 	})();
 
-	async function loadModelList() {
-		const response = await fetch(`${cdnPath}model_list.json`);
-		modelList = await response.json();
-	}
+	// async function loadModelList() {
+	// 	const response = await fetch(`${cdnPath}model_list.json`);
+	// 	const res = modalListJSON //change the json value to the url
+	// 	modelList = await response.json();
+	// }
 
 	async function loadModel(modelId, modelTexturesId, message) {
 		localStorage.setItem("modelId", modelId);
 		localStorage.setItem("modelTexturesId", modelTexturesId);
+		localStorage.setItem("modelIndex", modelId)
 		showMessage(message, 4000, 10);
 		if (useCDN) {
-			if (!modelList) await loadModelList();
-			const target = randomSelection(modelList.models[modelId]);
-			loadlive2d("live2d", `${cdnPath}model/${target}/index.json`);
+			// if (!modelList) await loadModelList();
+			// const target = randomSelection(modelList.models[modelId]);
+			console.log(`loadmodel with cdn`)
+			loadlive2d("live2d", `https://fastly.jsdelivr.net/gh/xiazeyu/live2d-widget-models/packages/live2d-widget-model-hijiki/assets/hijiki.model.json`)	//path to model.json
+			// loadlive2d("live2d", `${cdnPath}model/${target}/index.json`);
 		} else {
-			loadlive2d("live2d", `${apiPath}get/?id=${modelId}-${modelTexturesId}`);
+			console.log(`load model without cdn`)
+			loadlive2d("live2d", `https://fastly.jsdelivr.net/gh/xiazeyu/live2d-widget-models/packages/live2d-widget-model-hijiki/assets/hijiki.model.json`)	//path to model.json
+			// loadlive2d("live2d", `${apiPath}get/?id=${modelId}-${modelTexturesId}`);
 			console.log(`Live2D 模型 ${modelId}-${modelTexturesId} 加载完成`);
 		}
 	}
@@ -225,9 +231,11 @@ function loadWidget(config) {
 		const modelId = localStorage.getItem("modelId"),
 			modelTexturesId = localStorage.getItem("modelTexturesId");
 		if (useCDN) {
-			if (!modelList) await loadModelList();
+			console.log(`load rand model`)
+			// if (!modelList) await loadModelList();
 			const target = randomSelection(modelList.models[modelId]);
-			loadlive2d("live2d", `${cdnPath}model/${target}/index.json`);
+			loadlive2d("live2d", `https://fastly.jsdelivr.net/gh/xiazeyu/live2d-widget-models/packages/live2d-widget-model-hijiki/assets/hijiki.model.json`)	//path to model.json
+			// loadlive2d("live2d", `${cdnPath}model/${target}/index.json`);
 			showMessage("我的新衣服好看嘛？", 4000, 10);
 		} else {
 			// 可选 "rand"(随机), "switch"(顺序)
@@ -240,10 +248,11 @@ function loadWidget(config) {
 		}
 	}
 
+	//aii
 	async function loadOtherModel() {
 		let modelId = localStorage.getItem("modelId");
 		if (useCDN) {
-			if (!modelList) await loadModelList();
+			// if (!modelList) await loadModelList();
 			const index = (++modelId >= modelList.models.length) ? 0 : modelId;
 			loadModel(index, 0, modelList.messages[index]);
 		} else {
